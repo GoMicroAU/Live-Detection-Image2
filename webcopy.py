@@ -225,7 +225,7 @@ def selection_page():
 
 
 # Load YOLO model
-model = YOLO('yolo-nas.pt')
+lentil_model = YOLO('yolo-nas.pt')
 
 lentil_class_names = {
     0: 'A1', 1: 'SC', 2: 'PCS', 3: 'SP', 4: 'CKS',
@@ -237,7 +237,7 @@ lentil_class_names = {
 
 # Load Wheat Model
 # Update this path
-model = YOLO('wheat-yolo-nas.pt')
+wheat_model = YOLO('wheat-yolo-nas.pt')
 # Lentil Classes
 
 # Wheat Classes
