@@ -238,7 +238,7 @@ lentil_class_names = {
 
 # Load Wheat Model
  # Update this path
-model = YOLO('wheat-yolo-nas.pt')
+wheat_model = YOLO('wheat-yolo-nas.pt')
 # Lentil Classes
 
 # Wheat Classes
