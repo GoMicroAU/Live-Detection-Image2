@@ -90,7 +90,7 @@ st.markdown("""
 
             .st-emotion-cache-1erivf3 {
     
-    color: rgb(255 255 255 / 0%);
+    color: rgb(255 255 255 /);
 }
             
             .st-emotion-cache-7oyrr6 {
@@ -225,7 +225,8 @@ def selection_page():
 
 
 # Load YOLO model
-model = YOLO('yolo-nas.pt')
+# Update this path
+lentil_model = model = YOLO('yolo-nas.pt')
 
 lentil_class_names = {
     0: 'A1', 1: 'SC', 2: 'PCS', 3: 'SP', 4: 'CKS',
@@ -236,7 +237,7 @@ lentil_class_names = {
 
 
 # Load Wheat Model
-# Update this path
+ # Update this path
 model = YOLO('wheat-yolo-nas.pt')
 # Lentil Classes
 
@@ -277,8 +278,8 @@ def object_detection(image, model, class_names):
     class_counts = {class_name: 0 for class_name in class_names.values()}
 
     # Font settings
-    font_scale = 0.4
-    thickness = 1
+    font_scale = 0.7
+    thickness = 2
     font = cv2.FONT_HERSHEY_SIMPLEX
     text_color = (255, 255, 255)  # White color
 
@@ -288,7 +289,7 @@ def object_detection(image, model, class_names):
             class_name = class_names.get(int(class_id), "Unknown")
             class_counts[class_name] += 1
             
-            cv2.rectangle(image_bgr, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 1)
+           # cv2.rectangle(image_bgr, (int(x1), int(y1)), (int(x2), int(y2)), (0, 255, 0), 1)
             
             label = f"{class_name.upper()}"
 
@@ -331,7 +332,7 @@ def process_and_display_cropped_images(image, model, class_names, num_rows, num_
         for class_name, count in class_counts.items():
             total_class_counts[class_name] = total_class_counts.get(class_name, 0) + count
 
-        st.image(processed_image, caption=f"Cropped Image {i + 1}")
+        st.image(processed_image,)
 
     # Display summary of detected categories
     display_detected_categories_summary(total_class_counts)
@@ -400,15 +401,21 @@ def detection_page():
 
     def big_assessor():
         st.write("Big Assessor functionality.")
-        uploaded_files = st.file_uploader("Upload Images for Small Assessor", accept_multiple_files=True, type=["jpg", "jpeg"])
+        uploaded_files = st.file_uploader("Upload Images for Big Assessor", accept_multiple_files=True, type=["jpg", "jpeg"])
+
+        total_class_counts = {class_name: 0 for class_name in current_class_names.values()}  # Initialize total counts
 
         if uploaded_files:
             for uploaded_file in uploaded_files:
             # Read and process the original image
                 img = Image.open(uploaded_file)
                 img_np = np.array(img)  # Convert to numpy array for processing
-                processed_image, _ = object_detection(img_np, current_model, current_class_names)
-                st.image(processed_image, caption='Original Image with Detections', use_column_width=True)
+                processed_image, class_counts = object_detection(img_np, current_model, current_class_names)
+                st.image(processed_image, caption='Assessor Image', use_column_width=True)
+
+            # Update total class counts with current image counts
+                for class_name, count in class_counts.items():
+                    total_class_counts[class_name] += count
 
             # Crop the original image
                 cropped_image = crop_image_pil(img, "folder_name", "s")  # Assuming square cropping
@@ -421,10 +428,15 @@ def detection_page():
 
                 for i, img in enumerate(further_cropped_images):
                 # Apply detection to each further cropped image
-                    processed_sub_image, _ = object_detection(img, current_model, current_class_names)
-                
-                # Convert to RGB and display
-                    st.image(processed_sub_image, caption=f'Further Cropped Image {i+1}', use_column_width=True)
+                    processed_sub_image, class_counts = object_detection(img, current_model, current_class_names)
+                    st.image(processed_sub_image, use_column_width=True)
+
+                # Update total class counts again
+                    for class_name, count in class_counts.items():
+                        total_class_counts[class_name] += count
+
+        # Display summary of detected categories
+            display_detected_categories_summary(total_class_counts)
 
     # Implement the functionality for Big Assessor
 
@@ -432,18 +444,24 @@ def detection_page():
         st.write("Small Assessor functionality.")
         uploaded_files = st.file_uploader("Upload Images for Small Assessor", accept_multiple_files=True, type=["jpg", "jpeg"])
 
+        total_class_counts = {class_name: 0 for class_name in current_class_names.values()}  # Initialize total counts
+
         if uploaded_files:
             for uploaded_file in uploaded_files:
                 img = Image.open(uploaded_file).convert("RGB")
 
-            # Debug: Display original image
+            # Process the original image
+                img_np = np.array(img)
+                processed_image, class_counts = object_detection(img_np, current_model, current_class_names)
                 st.image(img, caption='Original Image', use_column_width=True)
 
+            # Update total class counts with current image counts
+                for class_name, count in class_counts.items():
+                    total_class_counts[class_name] += count
+
+            # Crop the original image
                 cropped_image = crop_image_pil(img, "folder_name", "s")  # Square cropping
                 cropped_image_np = np.array(cropped_image)
-
-            # Debug: Display cropped image
-                st.image(cropped_image, caption='Cropped Square Image', use_column_width=True)
 
             # Process further cropped images
                 row_num = 1
@@ -452,10 +470,15 @@ def detection_page():
 
                 for i, img in enumerate(further_cropped_images):
                 # Apply detection to each further cropped image
-                    processed_sub_image, _ = object_detection(img, current_model, current_class_names)
-                
-                # Convert to RGB and display
-                    st.image(processed_sub_image, caption=f'Further Cropped Image {i+1}', use_column_width=True)
+                    processed_sub_image, class_counts = object_detection(img, current_model, current_class_names)
+                    st.image(processed_sub_image, use_column_width=True)
+
+                # Update total class counts again
+                    for class_name, count in class_counts.items():
+                        total_class_counts[class_name] += count
+
+        # Display summary of detected categories
+            display_detected_categories_summary(total_class_counts)
 
 
 
@@ -464,14 +487,14 @@ def detection_page():
         
     with st.sidebar:
         st.title("Settings")
-        st.session_state.detection_mode = st.selectbox("Choose Mode", ["Camera Upload", "Big Assessor", "Small Assessor"])
+        st.session_state.detection_mode = st.selectbox("Choose Mode", ["Phone", "Assessor", "Spot check"])
 
     # Functionality based on chosen mode
-    if st.session_state.detection_mode == "Camera Upload":
+    if st.session_state.detection_mode == "Phone":
         camera_upload()
-    elif st.session_state.detection_mode == "Big Assessor":
+    elif st.session_state.detection_mode == "Assessor":
         big_assessor()
-    elif st.session_state.detection_mode == "Small Assessor":
+    elif st.session_state.detection_mode == "Spot check":
         small_assessor()
 
 
