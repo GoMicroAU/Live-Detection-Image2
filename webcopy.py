@@ -97,6 +97,11 @@ st.markdown("""
     color: rgb(250 250 250 / 0%);
     
 }
+
+.st-emotion-cache-1ec2a3d{
+    color: rgb(255 255 255);
+    
+}
         
         
      
@@ -106,6 +111,44 @@ st.markdown("""
 import cv2
 import numpy as np
 from PIL import Image
+
+if 'country' not in st.session_state:
+    st.session_state['country'] = None
+if 'language' not in st.session_state:
+    st.session_state['language'] = None
+if 'current_page' not in st.session_state:
+    st.session_state.current_page = "country_language_page"
+
+
+# Page functions
+def country_language_page():
+    st.title("Country & Language")
+    st.header("Country")
+    if st.button("Australia", on_click=lambda: set_country_language("Australia", "English")):
+        pass
+    if st.button("India", on_click=lambda: set_country_language("India", None)):
+        pass
+
+def set_country_language(country, language):
+    st.session_state['country'] = country
+    st.session_state['language'] = language
+    if language:
+        st.session_state['current_page'] = "selection_page"
+    else:
+        st.session_state['current_page'] = "language_page"
+
+def language_page():
+    st.title("Language")
+    st.header("Language")
+    if st.button("English", on_click=lambda: set_language("English")):
+        pass
+    if st.button("Hindi", on_click=lambda: set_language("Hindi")):
+        pass
+
+def set_language(language):
+    st.session_state['language'] = language
+    st.session_state['current_page'] = "selection_page"
+
 
 def toImgOpenCV(imgPIL):
     """Convert PIL Image to OpenCV format."""
@@ -128,6 +171,10 @@ def crop_image_pil(img, folder_name, string_val):
     cropped_img = img.crop((left, top, right, bottom))
     open_cv_image = toImgOpenCV(cropped_img)
     return open_cv_image
+    
+    
+def handle_close_click():
+    st.session_state.current_page = "selection_page"
 
 
 def crop_image_extra(image_np, folder_name, row_num, col_num):
@@ -156,7 +203,14 @@ def process_uploaded_images(uploaded_files, model, class_names):
             # Process and display cropped images
             num_rows, num_cols = 4, 3  # Define rows and columns for cropping
             process_and_display_cropped_images(image_np, model, class_names, num_rows, num_cols)
+            st.session_state.image_processed = True  # Set the flag when an image is processed
+
             total_images += 1
+            
+# Initialize the flag in session state
+if 'image_processed' not in st.session_state:
+    st.session_state.image_processed = False
+
 
    
 
@@ -166,9 +220,9 @@ def show_header(center=False):
         # Creates three columns for centering
         col1, padding,col2,padding, col3 = st.columns([1,1,2,1,1])
         with col2:  # This is the center column
-            st.image("GM__button.png", width=150)  # Adjust the width as needed
+            st.image("unnamed.png", width=150)  # Adjust the width as needed
     else:
-        st.image("GM__button.png", width=150)
+        st.image("unnamed.png", width=150)
         
         
         
@@ -201,14 +255,15 @@ def selection_page():
 
     with cols[3]:
         st.image("coffee_icon.png",width=120 )  # Use the same coming soon image path
-        st.button("Coming Soon Coffee", disabled=True)
+        st.button("Coffee", on_click=lambda: change_page_to_detection("Coffee"))
 
 
     # Repeat for the second row
     cols = st.columns([0.5,2,2,2,0.5])
     with cols[1]:
-        st.image("cardamon_icon.png",width=120 )
-        st.button("Coming Soon Cardamom", disabled=True)
+        st.image("almond_icon.png", width=120)  # Update this path
+        st.button("Almonds", on_click=lambda: change_page_to_detection("Almonds"))
+
 
 
     with cols[2]:
@@ -224,21 +279,20 @@ def selection_page():
   # Import the io module
 
 
-# Load YOLO model
-# Update this path
-lentil_model = model = YOLO('yolo-nas.pt')
+# Load YOLO model  # Update this path
+lentil_model = YOLO('lentils-model.pt')
 
 lentil_class_names = {
-    0: 'A1', 1: 'SC', 2: 'PCS', 3: 'SP', 4: 'CKS',
-    5: 'P', 6: 'FG/B', 7: 'FG/W', 8: 'CH', 9: 'WR',
-    10: 'S6/MM', 11: '7B/BS', 12: 'RSNL', 13: 'CSNL',
-    14: 'LSC', 15: 'FMP', 16: 'ID'
+    0: 'A1', 1: 'DE', 2: 'P', 3: 'SP', 4: 'CANO',
+    5: 'FI', 6: 'FM', 7: 'FN', 8: 'OM', 9: 'PC',
+    10: 'SD', 11: 'SN', 12: 'UM', 13: 'V',
+    14: 'SC', 15: 'PCS', 16: 'FS', 17: 'ID'
 }
 
 
 # Load Wheat Model
- # Update this path
-wheat_model = YOLO('wheat-yolo-nas.pt')
+  # Update this path
+wheat_model = YOLO('wheat-model.pt')
 # Lentil Classes
 
 # Wheat Classes
@@ -246,10 +300,40 @@ wheat_class_names = {
     0: 'G', 1: 'DST', 2: 'SD', 3: 'SP', 4: 'FS', 5: 'WG'
 }
 
+coffee_model = YOLO('coffee-model.pt')
+
+coffee_class_names = {
+    0: 'BL', 1: 'PB', 2: 'BB', 3: 'BN', 4: 'HS',
+    5: 'BK', 6: 'IM', 7: 'HO', 8: 'GB'
+}
+
+almond_model_path = 'yolo-almonds.pt'  # Update this path
+almond_model = YOLO(almond_model_path)
+
+almond_class_names = {
+    0: 'CS', 1: 'D', 2: 'G', 3: 'M', 4: 'N', 5: 'S'
+}
+
+
+
+
 # Full name dictionary
 # Full name dictionary with four main categories
 full_name_dict = {
+    'G':'Good Quality',
     'A1': 'Good Quality',
+    'DE': 'Defective Grain',
+'CANO': 'Foreign Seed',
+'FI': 'Foreign Insects',
+'FM': 'Foreign Material',
+'FN': 'Foreign Material',
+'OM': 'Objectionable Material',
+'PC': 'Defective Grain',
+'SD': 'Defective Grain',
+'SN': 'Snails',
+'UM': 'unmillable Material',
+'V': 'Foreign Seed',
+'FS': 'Foreign Material',
     'SC': 'Good Quality',
     'PCS': 'Defective Grain',
     'SP': 'Defective Grain',
@@ -265,7 +349,22 @@ full_name_dict = {
     'CSNL': 'Others',
     'LSC': 'Others',
     'FMP': 'Others',
-    'ID': 'Others'
+    'ID': 'Others',
+    'BL': 'Black Beans',
+    'PB': 'Partly Black Beans',
+    'BB': 'Broken Black Beans',
+    'BN': 'Brown Beans',
+    'HS': 'Husk Fragments',
+    'BK': 'Broken Beans',
+    'IM': 'Immature Beans',
+    'HO': 'Beans With Holes',
+    'GB': 'Good Beans',
+    'CS': 'Chips Scratch',
+    'D': 'Double',
+    'G': 'Gum',
+    'M': 'Mild',
+    'N': 'Normal',
+    'S': 'Stain'
 }
 
 
@@ -305,6 +404,23 @@ def object_detection(image, model, class_names):
 
     processed_image_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
     return processed_image_rgb, class_counts
+    
+    
+def crop_smaller_center_square(img):
+    """Crop a smaller square from the center of the image."""
+    width, height = img.size
+    new_side_length = min(width, height) / 2  # Half the size of the smaller dimension
+
+    left = width / 2 - new_side_length / 2
+    top = height / 2 - new_side_length / 2
+    right = width / 2 + new_side_length / 2
+    bottom = height / 2 + new_side_length / 2
+
+    # Crop the center square
+    cropped_img = img.crop((left, top, right, bottom))
+    return cropped_img
+
+
 
 
     
@@ -338,12 +454,46 @@ def process_and_display_cropped_images(image, model, class_names, num_rows, num_
     display_detected_categories_summary(total_class_counts)
 
 def display_detected_categories_summary(class_counts):
-    category_counts = {category: 0 for category in set(full_name_dict.values())}
+    # Define the order of categories
+    ordered_categories = [
+    "Good Quality",
+    "Defective Grain",
+    "Foreign Seed",
+    "Others",
+    "Foreign Insects",
+    "Foreign Material",
+    "Objectionable Material",
+    "Snails",
+    "unmillable Material",
+    "Black Beans",
+    "Partly Black Beans",
+    "Broken Black Beans",
+    "Brown Beans",
+    "Husk Fragments",
+    "Broken Beans",
+    "Immature Beans",
+    "Beans With Holes",
+    "Good Beans",
+    "Chips Scratch",
+        "Double",
+        "Gum",
+        "Mild",
+        "Normal",
+        "Stain"
+]
+    # Initialize a dictionary to hold counts for each ordered category
+    ordered_category_counts = {category: 0 for category in ordered_categories}
+
+    # Aggregate counts into the defined categories
     for class_name, count in class_counts.items():
         category_name = full_name_dict.get(class_name, "Others")
-        category_counts[category_name] += count
-    for category, count in category_counts.items():
-        st.write(f"{category}: {count}")
+        ordered_category_counts[category_name] += count
+
+    # Display results in the specified order
+    for category in ordered_categories:
+        if ordered_category_counts[category] > 0:
+            st.write(f"{category}: {ordered_category_counts[category]}")
+
     
 import streamlit as st
 import streamlit.components.v1 as components
@@ -369,24 +519,29 @@ def detection_page():
         elif st.session_state['selected_item'] == 'Wheat':
             current_model = wheat_model
             current_class_names = wheat_class_names
+        elif st.session_state['selected_item'] == 'Coffee':
+            current_model = coffee_model
+            current_class_names = coffee_class_names
+        elif st.session_state['selected_item'] == 'Almonds':  # Add condition for Almonds
+            current_model = almond_model
+            current_class_names = almond_class_names
         else:
             st.error("Please select an item.")
             return
-    else:
-        st.error("No item selected.")
-        return
-    
+        
+        
+
     
     
 
     def camera_upload():
-        st.write("Use only Camera Functionality")
+        st.write("Place grains in A4 sheet")
 
         total_class_counts = {class_name: 0 for class_name in current_class_names.values()}
         total_images = 0
 
     # Replace video capture with file uploader
-        uploaded_files = st.file_uploader("Upload Images", accept_multiple_files=True,label_visibility="hidden")
+        uploaded_files = st.file_uploader("For indoor use", accept_multiple_files=True,)
 
         if 'selected_item' in st.session_state:
         # [Existing logic to determine the model based on selected item]
@@ -400,8 +555,8 @@ def detection_page():
     # Implement the functionality for Camera Upload
 
     def big_assessor():
-        st.write("Big Assessor functionality.")
-        uploaded_files = st.file_uploader("Upload Images for Big Assessor", accept_multiple_files=True, type=["jpg", "jpeg"])
+        st.write("For use with GoMicro Assessor")
+        uploaded_files = st.file_uploader("Place grains in tray", accept_multiple_files=True, type=["jpg", "jpeg"])
 
         total_class_counts = {class_name: 0 for class_name in current_class_names.values()}  # Initialize total counts
 
@@ -411,7 +566,7 @@ def detection_page():
                 img = Image.open(uploaded_file)
                 img_np = np.array(img)  # Convert to numpy array for processing
                 processed_image, class_counts = object_detection(img_np, current_model, current_class_names)
-                st.image(processed_image, caption='Assessor Image', use_column_width=True)
+                st.image(img, caption='Assessor Image', use_column_width=True)
 
             # Update total class counts with current image counts
                 for class_name, count in class_counts.items():
@@ -435,14 +590,17 @@ def detection_page():
                     for class_name, count in class_counts.items():
                         total_class_counts[class_name] += count
 
+                    st.session_state.image_processed = True    
+
         # Display summary of detected categories
             display_detected_categories_summary(total_class_counts)
 
+        
     # Implement the functionality for Big Assessor
 
     def small_assessor():
-        st.write("Small Assessor functionality.")
-        uploaded_files = st.file_uploader("Upload Images for Small Assessor", accept_multiple_files=True, type=["jpg", "jpeg"])
+        st.write("Upload images using assessor")
+        uploaded_files = st.file_uploader("", accept_multiple_files=True, type=["jpg", "jpeg"], label_visibility="hidden")
 
         total_class_counts = {class_name: 0 for class_name in current_class_names.values()}  # Initialize total counts
 
@@ -450,40 +608,30 @@ def detection_page():
             for uploaded_file in uploaded_files:
                 img = Image.open(uploaded_file).convert("RGB")
 
-            # Process the original image
-                img_np = np.array(img)
-                processed_image, class_counts = object_detection(img_np, current_model, current_class_names)
-                st.image(img, caption='Original Image', use_column_width=True)
+            # Crop a smaller center square of the original image
+                cropped_image = crop_smaller_center_square(img)
+                cropped_image_np = np.array(cropped_image)
+
+            # Process the cropped image
+                processed_image, class_counts = object_detection(cropped_image_np, current_model, current_class_names)
+                st.image(processed_image, use_column_width=True)
 
             # Update total class counts with current image counts
                 for class_name, count in class_counts.items():
                     total_class_counts[class_name] += count
 
-            # Crop the original image
-                cropped_image = crop_image_pil(img, "folder_name", "s")  # Square cropping
-                cropped_image_np = np.array(cropped_image)
+                st.session_state.image_processed = True    
 
-            # Process further cropped images
-                row_num = 1
-                col_num = 1
-                further_cropped_images = crop_image_extra(cropped_image_np, "folder_name", row_num, col_num)
-
-                for i, img in enumerate(further_cropped_images):
-                # Apply detection to each further cropped image
-                    processed_sub_image, class_counts = object_detection(img, current_model, current_class_names)
-                    st.image(processed_sub_image, use_column_width=True)
-
-                # Update total class counts again
-                    for class_name, count in class_counts.items():
-                        total_class_counts[class_name] += count
-
-        # Display summary of detected categories
-            display_detected_categories_summary(total_class_counts)
-
-
+    # Display summary of detected categories
+        display_detected_categories_summary(total_class_counts)
 
         
-    # Implement the functionality for Small Assessor
+
+
+
+
+
+ 
         
     with st.sidebar:
         st.title("Settings")
@@ -496,14 +644,36 @@ def detection_page():
         big_assessor()
     elif st.session_state.detection_mode == "Spot check":
         small_assessor()
+        
+        
+    if st.session_state.image_processed:
+        st.write("### You can perform the QC process again with a new image if needed.")
+        
+        
+    # Create a row with two columns
+    col1, col2 = st.columns(2)
+
+    # Add the Close button in the first column
+    with col1:
+        if st.button("Close", on_click=handle_close_click):
+            # This button will now call handle_close_click when clicked
+            pass
+
+    # Add the Register button in the second column
+    with col2:
+        if st.session_state.image_processed:
+            st.markdown("<a href='https://www.gomicro.co/register/' target='_blank'><button style='width: 100%; color: white; background-color: rgb(33, 75, 65); padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;'>Register</button></a>", unsafe_allow_html=True)
+
+
 
 
 # Page navigation and session state code...
 
-if "current_page" not in st.session_state:
-    st.session_state.current_page = "selection_page"
-
-if st.session_state.current_page == "selection_page":
+if st.session_state.current_page == "country_language_page":
+    country_language_page()
+elif st.session_state.current_page == "language_page":
+    language_page()
+elif st.session_state.current_page == "selection_page":
     selection_page()
 elif st.session_state.current_page == "detection_page":
     detection_page()
