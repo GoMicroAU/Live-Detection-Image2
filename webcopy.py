@@ -414,13 +414,13 @@ def process_uploaded_images(uploaded_files, model, class_names):
                     all_detections.extend(detections)
 
             # Remove anomalous detections
-            all_detections = remove_anomalous_detections(all_detections, 0.5)
+            all_detections = remove_anomalous_detections(all_detections, 0.2)
 
             # Combine close detections
-            all_detections = combine_detections(all_detections, 0.5)
+            all_detections = combine_detections(all_detections, 0.8)
 
             # Remove overlapping detections
-            final_detections = remove_overlap_detections(all_detections, 0.4)
+            final_detections = remove_overlap_detections(all_detections, 0.8)
 
 
             # Count the final detections
@@ -535,7 +535,7 @@ def selection_page():
 
 
 # Load YOLO model
-#lentil_model_path = '/Users/shrinathkhadake/Downloads/lentils-model.pt'  # Update this path
+model = YOLO('yolov8n.pt') 
 lentil_model = YOLO('lentils-model.pt')
 
 lentil_class_names = {
@@ -561,7 +561,6 @@ lentil_class_names = {
 
 
 # Load Wheat Model
-#wheat_model_path = '/Users/shrinathkhadake/Downloads/wheat-model.pt'  # Update this path
 wheat_model = YOLO('wheat-model.pt')
 # Lentil Classes
 
@@ -585,15 +584,12 @@ coffee_class_names = {
 }
 
 
-#almond_model_path = 'yolo-almonds.pt'  # Update this path
 almond_model = YOLO('yolo-almonds.pt')
 
 almond_class_names = {
     0: 'CS', 1: 'D', 2: 'G', 3: 'M', 4: 'N', 5: 'S'
 }
 
-
-# Load new models
 soy_model = YOLO('soy-model.pt')
 corn_model = YOLO('model-corn.pt')
 
